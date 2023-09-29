@@ -1,0 +1,51 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+data:
+  config.yml: |-
+    global:
+      resolve_timeout: 1m
+      slack_api_url: 'https://hooks.slack.com/services/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'
+    route:
+      receiver: 'telegram'
+        
+      routes:
+        - match:
+            severity: warning
+          receiver: 'slack-notifications'
+        - match:
+            severity: Disaster
+          receiver: 'telegram'
+
+    receivers:
+    - name: 'telegram'
+      telegram_configs:
+      - bot_token: "5964297333:AAEoI09oaSLr1zWZcFc0itacHAvAuGFCGUk"
+        chat_id: 276978141
+        api_url: "https://api.telegram.org"
+        send_resolved: true
+        parse_mode: ""
+
+    - name: 'slack-notifications'
+      slack_configs:
+      - send_resolved: true
+        http_config: {}
+        api_url: 'https://hooks.slack.com/services/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'
+        channel: '#aida'
+        username: '{{ template "slack.default.username" . }}'
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '{{ template "slack.default.title" . }}'
+        title_link: '{{ template "slack.default.titlelink" . }}'
+        pretext: '{{ template "slack.default.pretext" . }}'
+        text: |-
+          {{ range .Alerts }}
+                 *Alert:* {{ .Annotations.summary }} - `{{ .Labels.severity }}`
+                 *Message:* {{ .Annotations.message }}
+          {{ end }}
+        footer: '{{ template "slack.default.footer" . }}'
+        fallback: '{{ template "slack.default.fallback" . }}'
+        callback_id: '{{ template "slack.default.callbackid" . }}'
+        icon_emoji: '{{ template "slack.default.iconemoji" . }}'
+        icon_url: '{{ template "slack.default.iconurl" . }}'
